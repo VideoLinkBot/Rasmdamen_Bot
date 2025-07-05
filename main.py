@@ -1,16 +1,26 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-from handlers import start, handle_photo, handle_button
-from config import BOT_TOKEN
+import os
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from handlers.handlers import start, handle_photo
+from flask import Flask
+import threading
 
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+TOKEN = os.environ.get("BOT_TOKEN")
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_button))
-    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+app = Flask(__name__)
 
-    print("✅ Bot ishga tushdi...")
-    app.run_polling()
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
+def run_bot():
+    application = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+    application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    threading.Thread(target=run_flask).start()
+    run_bot()
